@@ -14,34 +14,10 @@ using ExileCore.Shared.Enums;
 using SharpDX;
 using Vector2 = System.Numerics.Vector2;
 
-
 namespace dankpact
 {
     public partial class DankPactCore : BaseSettingsPlugin<Settings>
     {
-        public int CountEntitiesAroundMouse(IEnumerable<Entity> entities, float maxDistance)
-        {
-            int count = 0;
-            float maxDistanceSquare = maxDistance * maxDistance;
-            foreach (var entity in entities)
-            {
-                var monsterPosition = entity.Pos;
-                var screenPosition = GameController.IngameState.Camera.WorldToScreen(monsterPosition);
-                var cursorPosition = Input.MousePosition;
-
-                var xDiff = screenPosition.X - cursorPosition.X;
-                var yDiff = screenPosition.Y - cursorPosition.Y;
-                var monsterDistanceSquare = (xDiff * xDiff + yDiff * yDiff);
-
-                if (monsterDistanceSquare <= maxDistanceSquare)
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
         private DateTime LastDarkPact = DateTime.Now;
         private IEnumerator StartDarkPact()
         {
@@ -58,7 +34,7 @@ namespace dankpact
         private DateTime LastSummonSkeles = DateTime.Now;
         private IEnumerator SummonSkeles()
         {
-            if ((DateTime.Now - LastSummonSkeles).TotalMilliseconds < 2000)
+            if ((DateTime.Now - LastSummonSkeles).TotalMilliseconds < 1500)
                 yield break;
             yield return KeyPress(Settings.SummonSkeleKey, 100);
             LastSummonSkeles = DateTime.Now;
