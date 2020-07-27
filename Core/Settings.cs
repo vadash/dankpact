@@ -21,6 +21,7 @@ namespace dankpact
         [Menu("Dark Pact")]
         public HotkeyNode DarkPactKey { get; set; } = new HotkeyNode(System.Windows.Forms.Keys.W);
 
-
+        [Menu("Dark Pact chain range (pixels)")]
+        public RangeNode<int> DarkPactChainRange { get; set; } = new RangeNode<int>(200, 200, 900);
     }
 }

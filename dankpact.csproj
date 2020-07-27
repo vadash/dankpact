@@ -54,7 +54,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\Core.cs" />
+    <Compile Include="Core\CoreDebug.cs" />
     <Compile Include="Core\CoreInterface.cs" />
+    <Compile Include="Core\CoreSummon.cs" />
+    <Compile Include="Core\CoreUpdate.cs" />
+    <Compile Include="Core\Helpers.cs" />
     <Compile Include="Core\Settings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
