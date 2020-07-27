@@ -19,8 +19,8 @@ namespace dankpact
     public partial class DankPactCore : BaseSettingsPlugin<Settings>
     {
         private readonly int CLOSE_DIST_SQR = 40 * 40;
-        private readonly int MED_DIST_SQR = 60 * 60;
-        private readonly int FAR_DIST_SQR = 80 * 80;
+        private readonly int MED_DIST_SQR = 80 * 80;
+        private readonly int FAR_DIST_SQR = 120 * 120;
 
         int nClose = 0;
         int nMed = 0;
@@ -44,7 +44,7 @@ namespace dankpact
         public override void OnLoad()
         {
             mySummons = new TimeCache<ExileCore.PoEMemory.Components.DeployedObject[]>(UpdateDeployedObjects, 250);
-            chatUi = new TimeCache<Element>(UpdateChatUi, 1000);
+            chatUi = new TimeCache<Element>(UpdateChatUi, 3000);
             base.OnLoad();
         }
 
@@ -56,7 +56,6 @@ namespace dankpact
             nClose = 0;
             nMed = 0;
             nFar = 0;
-
             foreach (var obj in mySummons.Value)
             {
                 var squareDist = DistanceSquared(LocalPlayer.GridPos, obj.Entity.GridPos);
@@ -73,6 +72,37 @@ namespace dankpact
                     nFar++;
                 }
                 if (Settings.Debug) skelesEntities.Add(obj.Entity);
+            }
+
+            var highHp = LocalPlayer.GetComponent<Life>().HPPercentage > 0.9;
+            var needSummon =
+                nClose < 1 ||
+                nClose + nMed < 2 ||
+                nClose + nMed + nFar < 3;
+            if (!highHp && needSummon)
+            {
+                EndDarkPact();
+            }
+
+            if (Input.IsKeyDown(Settings.ActivateKey))
+            {
+                if (needSummon)
+                {
+                    SummonSkeles();
+                }
+                if (!needSummon)
+                {
+                    StartDarkPact();
+                }
+            }
+            else
+            {
+                var timeSinceDarkPact = (DateTime.Now - LastDarkPact).TotalMilliseconds;
+                if (timeSinceDarkPact > 100 &&
+                    timeSinceDarkPact < 350)
+                {
+                    EndDarkPact();
+                }
             }
 
             return base.Tick();
@@ -100,32 +130,6 @@ namespace dankpact
         {
             if (!CanRun()) return;
             if (Settings.Debug) DebugDrawDist();
-
-            if (Input.IsKeyDown(Settings.ActivateKey))
-            {
-                var needSummon = 
-                    nClose < 1 ||
-                    nClose + nMed < 2 ||
-                    nClose + nMed + nFar < 3;
-                if (needSummon)
-                {
-                    SummonSkeles();
-                }
-                if (!needSummon ||
-                    LocalPlayer.GetComponent<Life>().HPPercentage > 90) // dont wait for entity update
-                {
-                    CastDarkPact();
-                }
-            }
-            else
-            {
-                var timeSinceDarkPact = (DateTime.Now - LastDarkPact).TotalMilliseconds;
-                if (timeSinceDarkPact < 500 &&
-                    Input.IsKeyDown(Settings.DarkPactKey))
-                {
-                    Input.KeyUp(Settings.DarkPactKey);
-                }
-            }
         }
 
         private void DebugDrawDist()
@@ -151,16 +155,21 @@ namespace dankpact
         }
 
         private DateTime LastDarkPact = DateTime.Now;
-        private void CastDarkPact()
+        private void StartDarkPact()
         {
             Input.KeyDown(Settings.DarkPactKey);
             LastDarkPact = DateTime.Now;
         }
 
+        private void EndDarkPact()
+        {
+            Input.KeyUp(Settings.DarkPactKey);
+        }
+
         private DateTime LastSummonSkeles = DateTime.Now;
         private void SummonSkeles()
         {
-            if ((DateTime.Now - LastSummonSkeles).TotalMilliseconds < 1000)
+            if ((DateTime.Now - LastSummonSkeles).TotalMilliseconds < 2000)
                 return;
             KeyPress(Settings.SummonSkeleKey, 100);
             LastSummonSkeles = DateTime.Now;
