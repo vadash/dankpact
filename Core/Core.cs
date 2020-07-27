@@ -26,47 +26,58 @@ namespace dankpact
         int nMed = 0;
         int nFar = 0;
         List<Entity> skelesEntities;
+        TimeCache<ExileCore.PoEMemory.Components.DeployedObject[]> mySummons;
+        Entity LocalPlayer => GameController.Game.IngameState.Data.LocalPlayer;
+
+        public override void OnLoad()
+        {
+            mySummons = new TimeCache<ExileCore.PoEMemory.Components.DeployedObject[]>(UpdateDeployedObjects, 250);
+            base.OnLoad();
+        }
 
         public override Job Tick()
         {
             if (!Settings.Enable) return base.Tick();
-
-            var localPlayer = GameController.Game.IngameState.Data.LocalPlayer;
-            var mySummons = localPlayer
-                .GetComponent<Actor>()
-                .DeployedObjects
-                .Where(x => x != null && x.Entity != null && x.Entity.IsAlive);
 
             skelesEntities = new List<Entity>();
             nClose = 0;
             nMed = 0;
             nFar = 0;
 
-            foreach (var obj in mySummons)
+            foreach (var obj in mySummons.Value)
             {
-                if (obj.Entity.Path.Contains("RaisedSkeleton"))
+                var squareDist = DistanceSquared(LocalPlayer.GridPos, obj.Entity.GridPos);
+                if (squareDist < CLOSE_DIST_SQR)
                 {
-                    var squareDist = DistanceSquared(localPlayer.GridPos, obj.Entity.GridPos);
-                    if (squareDist < CLOSE_DIST_SQR)
-                    {
-                        nClose++;
-                    }
-                    else if (squareDist < MED_DIST_SQR)
-                    {
-                        nMed++;
-                    }
-                    else if (squareDist < FAR_DIST_SQR)
-                    {
-                        nFar++;
-                    }
-                    if (Settings.Debug) skelesEntities.Add(obj.Entity);
+                    nClose++;
                 }
+                else if (squareDist < MED_DIST_SQR)
+                {
+                    nMed++;
+                }
+                else if (squareDist < FAR_DIST_SQR)
+                {
+                    nFar++;
+                }
+                if (Settings.Debug) skelesEntities.Add(obj.Entity);
             }
 
             return base.Tick();
         }
 
-        private DateTime LastDarkPact = DateTime.Now;
+        private ExileCore.PoEMemory.Components.DeployedObject[] UpdateDeployedObjects()
+        {
+            return LocalPlayer
+                .GetComponent<Actor>()
+                .DeployedObjects
+                .Where(x => 
+                    x != null && 
+                    x.Entity != null && 
+                    x.Entity.IsAlive &&
+                    x.Entity.Path.Contains("RaisedSkeleton"))
+                .ToArray();
+        }
+
         public override void Render()
         {
             if (!Settings.Enable) return;
@@ -74,13 +85,16 @@ namespace dankpact
 
             if (Input.IsKeyDown(Settings.ActivateKey))
             {
-                if (nClose < 1 ||
+                var needSummon = 
+                    nClose < 1 ||
                     nClose + nMed < 2 ||
-                    nClose + nMed + nFar < 3)
+                    nClose + nMed + nFar < 3;
+                if (needSummon)
                 {
                     SummonSkeles();
                 }
-                else
+                if (!needSummon ||
+                    LocalPlayer.GetComponent<Life>().HPPercentage > 90) // dont wait for entity update
                 {
                     CastDarkPact();
                 }
@@ -88,8 +102,8 @@ namespace dankpact
             else
             {
                 var timeSinceDarkPact = (DateTime.Now - LastDarkPact).TotalMilliseconds;
-                if (timeSinceDarkPact > 100 &&
-                    timeSinceDarkPact < 1000)
+                if (timeSinceDarkPact < 500 &&
+                    Input.IsKeyDown(Settings.DarkPactKey))
                 {
                     Input.KeyUp(Settings.DarkPactKey);
                 }
@@ -118,6 +132,7 @@ namespace dankpact
             return Math.Pow(v1.X - v2.X, 2) + Math.Pow(v1.Y - v2.Y, 2);
         }
 
+        private DateTime LastDarkPact = DateTime.Now;
         private void CastDarkPact()
         {
             Input.KeyDown(Settings.DarkPactKey);
