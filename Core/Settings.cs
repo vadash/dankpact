@@ -9,6 +9,15 @@ namespace dankpact
     {
         public ToggleNode Enable { get; set; } = new ToggleNode(true);
 
+        [Menu("Activate key")]
+        public HotkeyNode ActivateKey { get; set; } = new HotkeyNode(System.Windows.Forms.Keys.Space);
+
+        [Menu("Summon Skeletons")]
+        public HotkeyNode SummonSkeleKey { get; set; } = new HotkeyNode(System.Windows.Forms.Keys.Q);
+
+        [Menu("Dark Pact")]
+        public HotkeyNode DarkPactKey { get; set; } = new HotkeyNode(System.Windows.Forms.Keys.W);
+
 
     }
 }
