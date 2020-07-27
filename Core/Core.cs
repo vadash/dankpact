@@ -16,7 +16,7 @@ using Vector2 = System.Numerics.Vector2;
 
 namespace dankpact
 {
-    public class SkillDpsCore : BaseSettingsPlugin<Settings>
+    public partial class DankPactCore : BaseSettingsPlugin<Settings>
     {
         private readonly int CLOSE_DIST_SQR = 40 * 40;
         private readonly int MED_DIST_SQR = 60 * 60;
@@ -29,15 +29,28 @@ namespace dankpact
         TimeCache<ExileCore.PoEMemory.Components.DeployedObject[]> mySummons;
         Entity LocalPlayer => GameController.Game.IngameState.Data.LocalPlayer;
 
+        private bool CanRun()
+        {
+            if (!Settings.Enable) return false;
+            if (GameController?.InGame == false) return false;
+            if (GameController?.Area?.CurrentArea?.IsTown == true) return false;
+            if (MenuWindow.IsOpened) return false;
+            if (GameController?.Entities?.Count == 0) return false;
+            if (GameController?.IsForeGroundCache == false) return false;
+            if (ChatIsOpened()) return false;
+            return true;
+        }
+
         public override void OnLoad()
         {
             mySummons = new TimeCache<ExileCore.PoEMemory.Components.DeployedObject[]>(UpdateDeployedObjects, 250);
+            chatUi = new TimeCache<Element>(UpdateChatUi, 1000);
             base.OnLoad();
         }
 
         public override Job Tick()
         {
-            if (!Settings.Enable) return base.Tick();
+            if (!CanRun()) return base.Tick();
 
             skelesEntities = new List<Entity>();
             nClose = 0;
@@ -78,9 +91,14 @@ namespace dankpact
                 .ToArray();
         }
 
+        private Element UpdateChatUi()
+        {
+            return GetChatUi();
+        }
+
         public override void Render()
         {
-            if (!Settings.Enable) return;
+            if (!CanRun()) return;
             if (Settings.Debug) DebugDrawDist();
 
             if (Input.IsKeyDown(Settings.ActivateKey))
