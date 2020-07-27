@@ -9,6 +9,9 @@ namespace dankpact
     {
         public ToggleNode Enable { get; set; } = new ToggleNode(true);
 
+        [Menu("Debug")]
+        public ToggleNode Debug { get; set; } = new ToggleNode(false);
+
         [Menu("Activate key")]
         public HotkeyNode ActivateKey { get; set; } = new HotkeyNode(System.Windows.Forms.Keys.Space);
 
