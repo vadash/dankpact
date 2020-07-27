@@ -19,7 +19,48 @@ namespace dankpact
     public partial class DankPactCore : BaseSettingsPlugin<Settings>
     {
         TimeCache<IEnumerable<Entity>> mySummons;
+        TimeCache<Entity> closestSummon;
         Entity LocalPlayer => GameController.Game.IngameState.Data.LocalPlayer;
+
+        public override void OnLoad()
+        {
+            mySummons = new TimeCache<IEnumerable<Entity>>(UpdateDeployedObjects, 250);
+            closestSummon = new TimeCache<Entity>(UpdateClosestSummon, 125);
+            chatUi = new TimeCache<Element>(UpdateChatUi, 3000);
+            Core.MainRunner.Run(new Coroutine(MainCoroutine(), this, "DankPact1"));
+            base.OnLoad();
+        }
+
+        private IEnumerator MainCoroutine()
+        {
+            while (true)
+            {
+                if (!CanRun()) { yield return new WaitTime(500); continue; }
+
+                var needSummon = closestSummon.Value?.IsValid != true;
+
+                if (Input.IsKeyDown(Settings.ActivateKey))
+                {
+                    if (needSummon)
+                    {
+                        yield return SummonSkeles();
+                        yield return new WaitTime(50);
+                    }
+                    yield return StartDarkPact();
+                }
+                else
+                {
+                    var timeSinceDarkPact = (DateTime.Now - LastDarkPact).TotalMilliseconds;
+                    if (timeSinceDarkPact > 100 &&
+                        timeSinceDarkPact < 350)
+                    {
+                        yield return EndDarkPact();
+                    }
+                }
+
+                yield return new WaitTime(33);
+            }
+        }
 
         private bool CanRun()
         {
@@ -31,57 +72,6 @@ namespace dankpact
             if (GameController?.IsForeGroundCache == false) return false;
             if (ChatIsOpened()) return false;
             return true;
-        }
-
-        public override void OnLoad()
-        {
-            mySummons = new TimeCache<IEnumerable<Entity>>(UpdateDeployedObjects, 250);
-            chatUi = new TimeCache<Element>(UpdateChatUi, 3000);
-            base.OnLoad();
-        }
-
-        public override Job Tick()
-        {
-            if (!CanRun()) return base.Tick();
-
-            var chainRangeSqr = Settings.DarkPactChainRange * Settings.DarkPactChainRange;
-            var sortedSummons = mySummons
-                .Value
-                .Where(x =>
-                    DistToCursorSqr(x) < chainRangeSqr)
-                .ToList();
-            sortedSummons.Sort(ClosestToMouseComparison);
-            var closestSummon = sortedSummons.FirstOrDefault();
-
-            var highHp = LocalPlayer.GetComponent<Life>().HPPercentage > 0.9;
-            var needSummon = closestSummon?.IsValid != true;
-            if (!highHp && needSummon)
-            {
-                EndDarkPact();
-            }
-
-            if (Input.IsKeyDown(Settings.ActivateKey))
-            {
-                if (needSummon)
-                {
-                    SummonSkeles();
-                }
-                if (!needSummon)
-                {
-                    StartDarkPact(20);
-                }
-            }
-            else
-            {
-                var timeSinceDarkPact = (DateTime.Now - LastDarkPact).TotalMilliseconds;
-                if (timeSinceDarkPact > 100 &&
-                    timeSinceDarkPact < 350)
-                {
-                    EndDarkPact();
-                }
-            }
-
-            return base.Tick();
         }
 
         public override void Render()

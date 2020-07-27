@@ -34,6 +34,19 @@ namespace dankpact
             return skeles;
         }
 
+        private Entity UpdateClosestSummon()
+        {
+            var chainRangeSqr = Settings.DarkPactChainRange * Settings.DarkPactChainRange;
+            var sortedSummons = mySummons
+                .Value
+                .Where(x =>
+                    DistToCursorSqr(x) < chainRangeSqr)
+                .ToList();
+            sortedSummons.Sort(ClosestToMouseComparison);
+            var closestSummon = sortedSummons.FirstOrDefault();
+            return closestSummon;
+        }
+
         private int ClosestToMouseComparison(Entity x, Entity y)
         {
             if (DistToCursorSqr(x) < DistToCursorSqr(y)) return -1;

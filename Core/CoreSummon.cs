@@ -43,40 +43,33 @@ namespace dankpact
         }
 
         private DateTime LastDarkPact = DateTime.Now;
-        private void StartDarkPact(int initialDelay = 0)
+        private IEnumerator StartDarkPact()
         {
-            KeyPress(Settings.DarkPactKey, 0, true, initialDelay);
+            yield return KeyPress(Settings.DarkPactKey, 0);
             LastDarkPact = DateTime.Now;
         }
 
-        private void EndDarkPact()
+        private IEnumerator EndDarkPact()
         {
             Input.KeyUp(Settings.DarkPactKey);
+            yield break;
         }
 
         private DateTime LastSummonSkeles = DateTime.Now;
-        private void SummonSkeles()
+        private IEnumerator SummonSkeles()
         {
             if ((DateTime.Now - LastSummonSkeles).TotalMilliseconds < 2000)
-                return;
-            KeyPress(Settings.SummonSkeleKey, 100);
+                yield break;
+            yield return KeyPress(Settings.SummonSkeleKey, 100);
             LastSummonSkeles = DateTime.Now;
         }
 
-        private void KeyPress(Keys key, int keyUpDelay = 20, bool channeled = false, int initialDelay = 0)
+        private static IEnumerator KeyPress(Keys key, int delay)
         {
-            var CoroutineWorker = new Coroutine(KeyPressRoutine(key, keyUpDelay, channeled, initialDelay), this, "KeyPress");
-            Core.ParallelRunner.Run(CoroutineWorker);
-        }
-
-        private static IEnumerator KeyPressRoutine(Keys key, int keyUpDelay, bool channeled, int initialDelay)
-        {
-            if (initialDelay > 0) 
-                yield return new WaitTime(initialDelay);
             Input.KeyDown(key);
-            if (!channeled)
+            if (delay != 0)
             {
-                yield return new WaitTime(keyUpDelay);
+                yield return new WaitTime(delay);
                 Input.KeyUp(key);
             }
         }
