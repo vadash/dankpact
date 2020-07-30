@@ -4,7 +4,9 @@ Simple plugin for skill nobody plays. It will automate summon skeletons + cast d
 
 # install
 
-Copy to source folder
+Copy to source folder `C:\projects\PoEHelper-3.110e-2\Plugins\Source\dankpact`
+
+![](https://i.imgur.com/NjQC9UG.png)
 
 # showcase
 
