@@ -34,7 +34,7 @@ namespace dankpact
         private DateTime LastSummonSkeles = DateTime.Now;
         private IEnumerator SummonSkeles()
         {
-            if ((DateTime.Now - LastSummonSkeles).TotalMilliseconds < 1500)
+            if ((DateTime.Now - LastSummonSkeles).TotalMilliseconds < 1000)
                 yield break;
             yield return KeyPress(Settings.SummonSkeleKey, 100);
             LastSummonSkeles = DateTime.Now;

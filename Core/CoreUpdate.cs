@@ -29,22 +29,12 @@ namespace dankpact
                     x.Entity.IsAlive &&
                     x.Entity.Path.Contains("RaisedSkeleton"))
                 .Select(x =>
-                    x.Entity);
+                    x.Entity)
+                .ToList();
+
+            skeles.Sort(ClosestToMouseComparison);
 
             return skeles;
-        }
-
-        private Entity UpdateClosestSummon()
-        {
-            var chainRangeSqr = Settings.DarkPactChainRange * Settings.DarkPactChainRange;
-            var sortedSummons = mySummons
-                .Value
-                .Where(x =>
-                    DistToCursorSqr(x) < chainRangeSqr)
-                .ToList();
-            sortedSummons.Sort(ClosestToMouseComparison);
-            var closestSummon = sortedSummons.FirstOrDefault();
-            return closestSummon;
         }
 
         private int ClosestToMouseComparison(Entity x, Entity y)
@@ -55,11 +45,12 @@ namespace dankpact
 
         private double DistToCursor(Entity x)
         {
-            return Math.Sqrt(DistToCursorSqr(x));
+            return x?.IsValid != true ? double.MaxValue : Math.Sqrt(DistToCursorSqr(x));
         }
 
         private double DistToCursorSqr(Entity x)
         {
+            if (x?.IsValid != true) return double.MaxValue;
             var cursorPosition = Input.MousePosition;
             var xOnScreen = GameController.IngameState.Camera.WorldToScreen(x.Pos);
             var xToCursorSqr = Helpers.DistanceSquared(xOnScreen, cursorPosition);

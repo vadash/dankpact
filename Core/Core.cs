@@ -19,13 +19,11 @@ namespace dankpact
     public partial class DankPactCore : BaseSettingsPlugin<Settings>
     {
         TimeCache<IEnumerable<Entity>> mySummons;
-        TimeCache<Entity> closestSummon;
         Entity LocalPlayer => GameController.Game.IngameState.Data.LocalPlayer;
 
         public override void OnLoad()
         {
-            mySummons = new TimeCache<IEnumerable<Entity>>(UpdateDeployedObjects, 250);
-            closestSummon = new TimeCache<Entity>(UpdateClosestSummon, 125);
+            mySummons = new TimeCache<IEnumerable<Entity>>(UpdateDeployedObjects, 125);
             chatUi = new TimeCache<Element>(UpdateChatUi, 3000);
             Core.MainRunner.Run(new Coroutine(MainCoroutine(), this, "DankPact1"));
             base.OnLoad();
@@ -37,7 +35,10 @@ namespace dankpact
             {
                 if (!CanRun()) { yield return new WaitTime(500); continue; }
 
-                var needSummon = closestSummon.Value?.IsValid != true;
+                var thirdClosest = mySummons.Value?.Skip(2)?.FirstOrDefault();
+                var needSummon = 
+                    thirdClosest?.IsValid != true ||
+                    DistToCursor(thirdClosest) > Settings.DarkPactChainRange;
 
                 if (Input.IsKeyDown(Settings.ActivateKey))
                 {
