@@ -1,6 +1,6 @@
 # dankpact
 
-This will automate summoning skeletons and casting dark pact
+Simple plugin for skill nobody plays. It will automate summon skeletons + cast dark pact. Skill is underrated and can push 100M shaper dps on medium budget with great defenses
 
 # install
 
